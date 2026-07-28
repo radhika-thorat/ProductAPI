@@ -1,16 +1,39 @@
-using Microsoft.AspNetCore.Authentication.Negotiate;
 using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Infrastructure;
+using Serilog;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+#region Logging
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .WriteTo.Console()
+        .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day);
+});
+
+#endregion
+
+#region Controllers
+
+builder.Services.AddControllers();
+
+#endregion
+
+#region API Versioning
 
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
-    options.ApiVersionReader = ApiVersionReader.Combine(
-        new UrlSegmentApiVersionReader(),
-        new HeaderApiVersionReader("x-api-version"));
 })
 .AddApiExplorer(options =>
 {
@@ -18,35 +41,80 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Add services to the container.
+#endregion
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+#region Swagger
+
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
-   .AddNegotiate();
+#endregion
 
-builder.Services.AddAuthorization(options =>
-{
-    // By default, all incoming requests will be authorized according to the default policy.
-    options.FallbackPolicy = options.DefaultPolicy;
-});
+#region Application
+
+builder.Services.AddApplication();
+
+#endregion
+
+#region Infrastructure
+
+builder.Services.AddInfrastructure(builder.Configuration);
+
+#endregion
+
+#region AutoMapper
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+#endregion
+
+#region FluentValidation
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
+
+#endregion
+
+#region JWT Authentication
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+#endregion
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+#region Middleware
+
+app.UseSwagger();
+
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+#endregion
 
 app.Run();
