@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../ProductApplication/ProductApplication.csproj" Id="cdf2e330-bc85-4c93-8296-80fd107b32ac" />
+  <Project Path="../ProductDomian/ProductDomain.csproj" Id="33a72931-530b-4954-96de-1870e890af28" />
+  <Project Path="../Services/Services.csproj" Id="2fcea7c1-f3c3-4f3a-acd3-122ee2bd7717" />
+  <Project Path="ProductAPI.csproj" />
+</Solution>
