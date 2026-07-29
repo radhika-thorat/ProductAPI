@@ -1,9 +1,11 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using ProductApplication.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ProductAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
@@ -21,6 +23,7 @@ namespace ProductAPI.Controllers
         /// </summary>
         /// <returns>List of products.</returns>
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAll()
         {
             var items = await _service.GetAllAsync();
@@ -31,6 +34,7 @@ namespace ProductAPI.Controllers
         /// Returns a product by id.
         /// </summary>
         [HttpGet("{id:int}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
             var item = await _service.GetByIdAsync(id);
@@ -42,6 +46,7 @@ namespace ProductAPI.Controllers
         /// Creates a new product.
         /// </summary>
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(CreateProductDto dto)
         {
             var result = await _service.CreateAsync(dto);
@@ -55,6 +60,7 @@ namespace ProductAPI.Controllers
         /// Updates an existing product.
         /// </summary>
         [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, UpdateProductDto dto)
         {
             await _service.UpdateAsync(id, dto);
@@ -67,8 +73,9 @@ namespace ProductAPI.Controllers
 
         /// <summary>
         /// Deletes a product.
-        /// </summary>
-        [HttpDelete("{id:int}")]
+        /// </summary>      
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             await _service.DeleteAsync(id);
