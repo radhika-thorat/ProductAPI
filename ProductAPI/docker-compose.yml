@@ -1,0 +1,29 @@
+services:
+  productapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    ports:
+      - "5000:8080"
+
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=productdb;Database=ProductMater;User Id=sa;Password=StrongPassword@123;TrustServerCertificate=True;Encrypt=False;
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: productdb
+
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=StrongPassword@123
+
+    ports:
+      - "1433:1433"
+
+    volumes:
+      - sql_data:/var/opt/mssql
+
+volumes:
+  sql_data:
