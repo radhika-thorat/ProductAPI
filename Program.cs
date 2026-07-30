@@ -1,20 +1,27 @@
 using Asp.Versioning;
 using FluentValidation;
-using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using ProductAPI.Extensions;
+using ProductSolution.Infrastructure.Identity;
+using ProductSolution.ProductAPI.Extensions;
 using Serilog;
 using System.Text;
 using System.Text.Json;
 
+/// <summary>
+/// Entry point of the Product API application.
+/// Configures services, middleware, authentication,
+/// logging, API versioning, and Swagger.
+/// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
+// Register JWT Token Service.
 builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
 #region Logging
 
+// Configure Serilog logging.
 builder.Host.UseSerilog((context, configuration) =>
 {
     configuration
@@ -27,12 +34,14 @@ builder.Host.UseSerilog((context, configuration) =>
 
 #region Controllers
 
+// Register API controllers.
 builder.Services.AddControllers();
 
 #endregion
 
 #region API Versioning
 
+// Configure API Versioning.
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -49,6 +58,7 @@ builder.Services.AddApiVersioning(options =>
 
 #region Swagger
 
+// Register Swagger services.
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
@@ -57,28 +67,35 @@ builder.Services.AddSwaggerGen();
 
 #region Application
 
+// Register Application layer services.
 builder.Services.AddApplication();
 
 #endregion
 
 #region Infrastructure
 
+// Register Infrastructure layer services.
 builder.Services.AddInfrastructure(builder.Configuration);
 
 #endregion
 
 #region AutoMapper
 
+// Register AutoMapper.
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 #endregion
 
 #region FluentValidation
 
+// Register FluentValidation validators.
 builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
 
 #endregion
 
+#region CORS
+
+// Configure Cross-Origin Resource Sharing (CORS).
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -91,8 +108,11 @@ builder.Services.AddCors(options =>
         });
 });
 
+#endregion
+
 #region JWT Authentication
 
+// Configure JWT Authentication.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -100,7 +120,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         if (string.IsNullOrWhiteSpace(jwtKey))
         {
-            throw new InvalidOperationException("JWT SecretKey is missing from configuration.");
+            throw new InvalidOperationException(
+                "JWT SecretKey is missing from configuration.");
         }
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -117,7 +138,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         options.Events = new JwtBearerEvents
         {
-            // No token or invalid token
+            // Executed when the JWT token is successfully validated.
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("===== TOKEN VALID =====");
+
+                foreach (var claim in context.Principal.Claims)
+                {
+                    Console.WriteLine($"{claim.Type} : {claim.Value}");
+                }
+
+                return Task.CompletedTask;
+            },
+
+            // Executed when the token is missing or invalid.
             OnChallenge = async context =>
             {
                 context.HandleResponse();
@@ -132,17 +166,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     Message = "Authorization required. Please login and provide a valid JWT token."
                 };
 
-                await context.Response.WriteAsync(JsonSerializer.Serialize(result));
+                await context.Response.WriteAsync(
+                    JsonSerializer.Serialize(result));
             },
 
-            // Token expired
+            // Executed when the token has expired.
             OnAuthenticationFailed = async context =>
             {
                 if (context.Exception is SecurityTokenExpiredException)
                 {
                     context.NoResult();
 
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.StatusCode =
+                        StatusCodes.Status401Unauthorized;
+
                     context.Response.ContentType = "application/json";
 
                     var result = new
@@ -152,14 +189,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         Message = "Your JWT token has expired. Please login again."
                     };
 
-                    await context.Response.WriteAsync(JsonSerializer.Serialize(result));
+                    await context.Response.WriteAsync(
+                        JsonSerializer.Serialize(result));
                 }
             },
 
-            // Valid token but insufficient permissions
+            // Executed when the authenticated user is forbidden.
             OnForbidden = async context =>
             {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.StatusCode =
+                    StatusCodes.Status403Forbidden;
+
                 context.Response.ContentType = "application/json";
 
                 var result = new
@@ -169,11 +209,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     Message = "You do not have permission to access this resource."
                 };
 
-                await context.Response.WriteAsync(JsonSerializer.Serialize(result));
+                await context.Response.WriteAsync(
+                    JsonSerializer.Serialize(result));
             }
         };
     });
 
+// Configure Swagger with JWT Authentication.
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -182,7 +224,7 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1"
     });
 
-    // JWT Authentication
+    // Configure JWT Bearer Authentication.
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -193,6 +235,7 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Enter your JWT token.\nExample: Bearer eyJhbGciOiJIUzI1NiIs..."
     });
 
+    // Apply JWT authentication globally.
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -209,29 +252,35 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Register Authorization services.
 builder.Services.AddAuthorization();
 
 #endregion
 
+// Build the application.
 var app = builder.Build();
 
 #region Middleware
 
+// Enable Swagger in Development environment.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection(); //HTTPS & TLS 1.2+
+// Redirect HTTP requests to HTTPS.
+app.UseHttpsRedirection();
 
+// Add security headers.
 app.Use(async (context, next) =>
 {
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "no-referrer";
     context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
-    context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
+    context.Response.Headers["Permissions-Policy"] =
+        "geolocation=(), microphone=(), camera=()";
 
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self';";
@@ -239,12 +288,16 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Enable Authentication middleware.
 app.UseAuthentication();
 
+// Enable Authorization middleware.
 app.UseAuthorization();
 
+// Map API Controllers.
 app.MapControllers();
 
 #endregion
 
+// Start the application.
 app.Run();

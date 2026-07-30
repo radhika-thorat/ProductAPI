@@ -1,20 +1,19 @@
 ﻿using Asp.Versioning;
-using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ProductApplication.DTOs;
-using ProductApplication.Interfaces;
+using ProductSolution.Infrastructure.Identity;
+using ProductSolution.ProductApplication.DTOs;
 
-namespace ProductAPI.Controllers;
+namespace ProductSolution.ProductAPI.Controllers;
 
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly Infrastructure.Identity.IJwtTokenService _jwtService;
+    private readonly IJwtTokenService _jwtService;
 
-    public AuthController(Infrastructure.Identity.IJwtTokenService jwtService)
+    public AuthController(IJwtTokenService jwtService)
     {
         _jwtService = jwtService;
     }
@@ -23,31 +22,20 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public IActionResult Login(LoginRequestDto request)
     {
-        string role;
-
-        if (request.UserName == "admin" &&
-            request.Password == "Admin@123")
-        {
-            role = "Admin";
-        }
-        else if (request.UserName == "user" &&
-                 request.Password == "User@123")
-        {
-            role = "User";
-        }
-        else
+        if (!ValidateUser(request, out string role))
         {
             return Unauthorized(new
             {
+                Success = false,
                 Message = "Invalid username or password."
             });
         }
 
-        var accessToken = _jwtService.GenerateAccessToken(
-            request.UserName,
-            role);
-
+        var accessToken = _jwtService.GenerateAccessToken(request.UserName, role);
         var refreshToken = _jwtService.GenerateRefreshToken();
+
+        // Save Refresh Token
+        RefreshTokenStore.Tokens[request.UserName] = refreshToken;
 
         return Ok(new LoginResponseDto
         {
@@ -56,25 +44,62 @@ public class AuthController : ControllerBase
         });
     }
 
-    [AllowAnonymous]
     [HttpPost("refresh")]
+    [AllowAnonymous]
     public IActionResult Refresh(RefreshTokenRequestDto request)
     {
-        if (!RefreshTokenStore.Tokens.ContainsValue(request.RefreshToken))
-            return Unauthorized();
+        var user = RefreshTokenStore.Tokens
+            .FirstOrDefault(x => x.Value == request.RefreshToken);
 
-        var accessToken =
-            _jwtService.GenerateAccessToken("admin", "Admin");
+        if (string.IsNullOrEmpty(user.Key))
+        {
+            return Unauthorized(new
+            {
+                Success = false,
+                Message = "Invalid refresh token."
+            });
+        }
 
-        var refreshToken =
-            _jwtService.GenerateRefreshToken();
+        string role = GetRole(user.Key);
 
-        RefreshTokenStore.Tokens["admin"] = refreshToken;
+        var accessToken = _jwtService.GenerateAccessToken(user.Key, role);
+        var refreshToken = _jwtService.GenerateRefreshToken();
+
+        // Replace Refresh Token
+        RefreshTokenStore.Tokens[user.Key] = refreshToken;
 
         return Ok(new LoginResponseDto
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken
         });
+    }
+
+    private static bool ValidateUser(LoginRequestDto request, out string role)
+    {
+        role = string.Empty;
+
+        if (request.UserName.Equals("admin", StringComparison.OrdinalIgnoreCase)
+            && request.Password == "Admin@123")
+        {
+            role = "Admin";
+            return true;
+        }
+
+        if (request.UserName.Equals("user", StringComparison.OrdinalIgnoreCase)
+            && request.Password == "User@123")
+        {
+            role = "User";
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string GetRole(string username)
+    {
+        return username.Equals("admin", StringComparison.OrdinalIgnoreCase)
+            ? "Admin"
+            : "User";
     }
 }

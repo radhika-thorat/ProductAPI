@@ -2,13 +2,13 @@
 
 ## Overview
 
-ProductAPI is a RESTful Web API built using ASP.NET Core 8 following Clean Architecture principles.
+ProductAPI is a RESTful Web API built using **ASP.NET Core 8**, following **Clean Architecture** principles.
 
-The application provides CRUD operations for Products and Items using SQL Server and Entity Framework Core.
+The application provides CRUD operations for **Products** and **Items** using **SQL Server** and **Entity Framework Core**. It also includes JWT Authentication, API Versioning, Swagger documentation, logging, validation, unit testing, and Docker support.
 
 ---
 
-## Technology Stack
+# Technology Stack
 
 - .NET 8
 - ASP.NET Core Web API
@@ -19,7 +19,9 @@ The application provides CRUD operations for Products and Items using SQL Server
 - JWT Authentication
 - Swagger / OpenAPI
 - Serilog
-- xUnit & Moq
+- xUnit
+- Moq
+- FluentAssertions
 - Docker
 
 ---
@@ -37,7 +39,7 @@ Solution
 └── Tests
 ```
 
-Architecture Layers
+## Architecture Layers
 
 - API Layer
 - Application Layer
@@ -46,36 +48,57 @@ Architecture Layers
 
 ---
 
+# Features
+
+- CRUD Operations for Products
+- Item Management
+- Repository Pattern
+- Unit of Work Pattern
+- Dependency Injection
+- JWT Authentication
+- Role-Based Authorization
+- API Versioning
+- Swagger Documentation
+- FluentValidation
+- Global Exception Handling
+- Serilog Logging
+- Entity Framework Core
+- SQL Server Integration
+- Docker Support
+- Unit & Integration Testing
+
+---
+
 # API Endpoints
 
-## Products
+## Product APIs
 
-| Method | URL | Description |
-|---------|-----|-------------|
-| GET | /api/v1/products | Get all products |
-| GET | /api/v1/products/{id} | Get product by Id |
-| POST | /api/v1/products | Create Product |
-| PUT | /api/v1/products/{id} | Update Product |
-| DELETE | /api/v1/products/{id} | Delete Product |
-
----
-
-## Items
-
-| Method | URL |
-|---------|-----|
-| GET | /api/v1/products/{productId}/items |
-| POST | /api/v1/products/{productId}/items |
-| PUT | /api/v1/items/{id} |
-| DELETE | /api/v1/items/{id} |
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/v1/products` | Get all products |
+| GET | `/api/v1/products/{id}` | Get product by ID |
+| POST | `/api/v1/products` | Create a new product |
+| PUT | `/api/v1/products/{id}` | Update an existing product |
+| DELETE | `/api/v1/products/{id}` | Delete a product |
 
 ---
 
-# OpenAPI / Swagger Documentation
+## Item APIs
 
-Swagger is enabled for testing the REST API.
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/v1/products/{productId}/items` | Get items by product |
+| POST | `/api/v1/products/{productId}/items` | Add item to product |
+| PUT | `/api/v1/items/{id}` | Update item |
+| DELETE | `/api/v1/items/{id}` | Delete item |
 
-Run the application and open
+---
+
+# API Documentation (Swagger)
+
+Swagger is enabled for testing and documenting the REST API.
+
+Open the following URL after running the application:
 
 ```
 https://localhost:5001/swagger
@@ -87,55 +110,26 @@ or
 https://localhost:7xxx/swagger
 ```
 
-Swagger provides
+Swagger provides:
 
+- API Documentation
 - Request Models
 - Response Models
-- Status Codes
-- Authentication
+- HTTP Status Codes
+- JWT Authentication Support
 - API Versioning
 
 ---
 
-# Authentication Flow (High Level)
+# Authentication Flow
 
-The application uses JWT Authentication.
-
-Authentication Process
-
-Client
-
-↓
-
-POST /api/v1/auth/login
-
-↓
-
-Validate User
-
-↓
-
-Generate JWT Token
-
-↓
-
-Return Access Token
-
-↓
-
-Client sends
-
-Authorization: Bearer {token}
-
-↓
-
-Protected API
+The application uses **JWT (JSON Web Token) Authentication**.
 
 ```
 Client
    │
    ▼
-Login API
+POST /api/v1/auth/login
    │
    ▼
 Validate Credentials
@@ -144,40 +138,43 @@ Validate Credentials
 Generate JWT Token
    │
    ▼
-Return Token
+Return Access Token
    │
    ▼
-Client Calls Protected APIs
+Client Sends
+
+Authorization: Bearer {token}
+
+   │
+   ▼
+Protected APIs
 ```
 
 ---
 
 # Request Validation
 
-FluentValidation is used for request validation.
+Validation is implemented using **FluentValidation**.
 
-Example
+Validators include:
 
-CreateProductValidator
-
-UpdateProductValidator
-
-CreateItemValidator
-
-UpdateItemValidator
+- CreateProductValidator
+- UpdateProductValidator
+- CreateItemValidator
+- UpdateItemValidator
 
 ---
 
 # Error Handling
 
-Global Exception Middleware is implemented.
+Global Exception Handling Middleware is implemented to return consistent API responses.
 
-Example Response
+Example:
 
 ```json
 {
-  "statusCode":500,
-  "message":"Internal Server Error"
+  "statusCode": 500,
+  "message": "Internal Server Error"
 }
 ```
 
@@ -185,11 +182,12 @@ Example Response
 
 # Logging
 
-Logging is implemented using Serilog.
+Logging is implemented using **Serilog**.
 
-Logs are written to
+Logs are written to:
 
 - Console
+- Log Files (`Logs/log-.txt`)
 
 ---
 
@@ -199,12 +197,12 @@ Logs are written to
 
 - Visual Studio 2022
 - .NET 8 SDK
-- SQL Server Express / SQL Server
-- SQL Server Management Studio
+- SQL Server / SQL Server Express
+- SQL Server Management Studio (SSMS)
 
 ---
 
-## Clone Repository
+# Clone Repository
 
 ```bash
 git clone https://github.com/<username>/ProductAPI.git
@@ -212,7 +210,7 @@ git clone https://github.com/<username>/ProductAPI.git
 
 ---
 
-## Restore Packages
+# Restore NuGet Packages
 
 ```bash
 dotnet restore
@@ -220,11 +218,15 @@ dotnet restore
 
 ---
 
-## Update Database
+# Database Migration
+
+Create Migration
 
 ```powershell
 Add-Migration InitialCreate
 ```
+
+Update Database
 
 ```powershell
 Update-Database
@@ -232,9 +234,9 @@ Update-Database
 
 ---
 
-## Run Application
+# Run the Application
 
-Visual Studio
+Using Visual Studio
 
 ```
 F5
@@ -246,51 +248,55 @@ or
 Ctrl + F5
 ```
 
+Using .NET CLI
+
+```bash
+dotnet run
+```
+
 ---
 
-# SQL Server
+# SQL Server Configuration
 
-Connection String
+Example Connection String
 
 ```json
-"ConnectionStrings": {
-"DefaultConnection":
-"Server=SHREE-DIVYARAJ\\SQLEXPRESS;
-Database=Test;
-Trusted_Connection=True;
-TrustServerCertificate=True;"
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=SHREE-DIVYARAJ\\SQLEXPRESS;Database=Test;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
 }
 ```
 
 ---
 
-# Deployment Procedure
+# Deployment
 
 ## Local Deployment
 
-1. Restore Packages
-2. Build Solution
-3. Update Database
-4. Run API
-5. Open Swagger
+1. Restore NuGet Packages
+2. Build the Solution
+3. Apply Database Migrations
+4. Run the API
+5. Open Swagger UI
 
 ---
 
 ## Docker Deployment
 
-Build Image
+Build Docker Image
 
 ```bash
 docker build -t productapi .
 ```
 
-Run Container
+Run Docker Container
 
 ```bash
 docker run -p 8080:80 productapi
 ```
 
-Docker Compose
+Using Docker Compose
 
 ```bash
 docker compose up
@@ -298,15 +304,15 @@ docker compose up
 
 ---
 
-# Unit Testing
+# Running Tests
 
-Run Tests
+Execute all tests:
 
 ```bash
 dotnet test
 ```
 
-Testing Frameworks
+Testing Frameworks:
 
 - xUnit
 - Moq
@@ -314,30 +320,77 @@ Testing Frameworks
 
 ---
 
-# Performance
+# Performance Optimizations
 
-- Async/Await
+- Async/Await Programming
 - AsNoTracking()
 - Repository Pattern
 - Dependency Injection
 - Pagination
-- SQL Indexes
+- SQL Index Optimization
 
 ---
 
 # Security
 
 - JWT Authentication
-- Role Based Authorization
-- HTTPS
-- CORS
+- Role-Based Authorization
+- HTTPS Enforcement
+- CORS Policy
 - FluentValidation
 - SQL Injection Protection
+- Security Headers
+
+---
+
+# Project Structure
+
+```
+ProductAPI
+│
+├── Controllers
+├── Extensions
+├── Middleware
+├── ProductApplication
+│   ├── DTOs
+│   ├── Interfaces
+│   └── Validators
+│
+├── ProductDomain
+│   ├── Entities
+│   ├── Events
+│   ├── Exceptions
+│   └── Enums
+│
+├── Infrastructure
+│   ├── Data
+│   ├── Identity
+│   └── Repositories
+│
+├── Services
+│
+└── Tests
+```
 
 ---
 
 # Author
 
-Vijay Thorat
+**Radhika Thorat**
 
-.NET Full Stack Developer
+.NET Developer
+
+### Skills
+
+- ASP.NET Core
+- .NET 8
+- C#
+- Entity Framework Core
+- SQL Server
+- Angular
+- JWT Authentication
+- REST API Development
+- Azure
+- Docker
+- Clean Architecture
+- Design Patterns

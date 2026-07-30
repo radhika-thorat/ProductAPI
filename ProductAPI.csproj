@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="ProductAPI.csproj.user" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" Version="8.0.0" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
@@ -35,5 +39,6 @@
     <ProjectReference Include="..\ProductDomian\ProductDomain.csproj" />
     <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
+
 
 </Project>

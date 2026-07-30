@@ -1,32 +1,23 @@
-version: '3.8'
-
 services:
-
   productapi:
-    container_name: productapi
-
     build:
       context: .
-      dockerfile: ProductAPI/Dockerfile
+      dockerfile: Dockerfile
 
     ports:
       - "5000:8080"
 
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Server=.;Database=ProductDb;Trusted_Connection=True;;TrustServerCertificate=True;Encrypt=False"
-
-    depends_on:
-      - sqlserver
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=productdb;Database=ProductMater;User Id=sa;Password=StrongPassword@123;TrustServerCertificate=True;Encrypt=False;
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-
     container_name: productdb
 
     environment:
-      ACCEPT_EULA: "Y"
-      SA_PASSWORD: "YourStrong@Pass123"
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=StrongPassword@123
 
     ports:
       - "1433:1433"
