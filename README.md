@@ -4,7 +4,7 @@
 
 ProductAPI is a RESTful Web API built using **ASP.NET Core 8**, following **Clean Architecture** principles.
 
-The application provides CRUD operations for **Products** and **Items** using **SQL Server** and **Entity Framework Core**. It also includes JWT Authentication, API Versioning, Swagger documentation, logging, validation, unit testing, and Docker support.
+The application provides CRUD operations for **Products** using **SQL Server** and **Entity Framework Core**. It also includes JWT Authentication, API Versioning, Swagger documentation, logging, validation, unit testing, and Docker support.
 
 ---
 
@@ -83,17 +83,6 @@ Solution
 
 ---
 
-## Item APIs
-
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/api/v1/products/{productId}/items` | Get items by product |
-| POST | `/api/v1/products/{productId}/items` | Add item to product |
-| PUT | `/api/v1/items/{id}` | Update item |
-| DELETE | `/api/v1/items/{id}` | Delete item |
-
----
-
 # API Documentation (Swagger)
 
 Swagger is enabled for testing and documenting the REST API.
@@ -160,9 +149,6 @@ Validators include:
 
 - CreateProductValidator
 - UpdateProductValidator
-- CreateItemValidator
-- UpdateItemValidator
-
 ---
 
 # Error Handling
@@ -205,7 +191,7 @@ Logs are written to:
 # Clone Repository
 
 ```bash
-git clone https://github.com/<username>/ProductAPI.git
+git clone [https://github.com/radhika-thorat/ProductAPI)]
 ```
 
 ---
